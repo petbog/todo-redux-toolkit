@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import ListList from './components/TodoList';
 import InputField from './components/InputField';
-import { useDispatch } from 'react-redux';
-import { addTodo } from './state/TodoSlise';
+import { useDispatch, useSelector } from 'react-redux';
+import { addTodo, AxiosTodos } from './state/TodoSlise';
 
 function App() {
 
@@ -15,10 +15,19 @@ function App() {
     dispatch(addTodo({ text }));
     setText('')
   }
+
+  useEffect(() => {
+    dispatch(AxiosTodos())
+  }, [dispatch]);
+
+  const { status, error } = useSelector(state => state.todos);
+
   return (
     <div className="App">
       <div className="">
         <InputField text={text} hamdleInput={setText} handleSubmit={AddTask} />
+        {status === 'loading' && <h1>Loading...</h1>}
+        {error && <h1>ServerError:{error}</h1>}
         <ListList />
       </div>
     </div>

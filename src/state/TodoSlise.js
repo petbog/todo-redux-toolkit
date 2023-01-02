@@ -1,9 +1,71 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+
+export const AxiosTodos = createAsyncThunk(
+    'todos/AxiosTodos',
+    async function (_, { rejectWithValue }) {
+        try {
+            const response = await axios.get(`https://jsonplaceholder.typicode.com/todos?_limit=20`).then(res => res.data)
+            if (!!response.ok) {
+                throw new Error('ServerError');
+            }
+            return await response
+        } catch (error) {
+            return rejectWithValue(error.message)
+        }
+
+
+    }
+)
+export const DeleteTodo = createAsyncThunk(
+    'todos/DeleteTodo',
+    async function (id, { rejectWithValue, dispatch }) {
+        try {
+            const response = await axios.delete(`https://jsonplaceholder.typicode.com/todos/${id}`).then(res => res.data)
+            if (!!response.ok) {
+                throw new Error('ServerError.Delete task')
+            }
+            dispatch(removeTodo({ id }))
+        } catch (error) {
+            return rejectWithValue(error.message)
+        }
+    }
+)
+
+export const ToggleStatus = createAsyncThunk(
+    'todos/ToggleStatus',
+    async function (id, { rejectWithValue, dispatch, getState }) {
+        const todo = getState().todos.todos.find(todo => todo.id === id)
+        try {
+            const response = await axios.put(`https://jsonplaceholder.typicode.com/todos/${id}`,
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body:JSON.stringify({
+                        completed:!todo.completed
+                    })
+                }).then(res => res.data)
+            if (!!response.ok) {
+                throw new Error('Server Error')
+            }
+            dispatch(toggleTodoCompleted({ id }))
+        } catch (error) {
+            return rejectWithValue(error.message)
+        }
+    }
+)
+const SetError = (state, action) => {
+    state.status = 'rejected';
+    state.error = action.payload
+}
 
 const todoSlise = createSlice({
     name: 'todos',
     initialState: {
         todos: [],
+        status: null,
+        error: null,
     },
     reducers: {
         addTodo(state, action) {
@@ -19,8 +81,24 @@ const todoSlise = createSlice({
             toggledTodo.completed = !toggledTodo.completed
         },
         removeTodo(state, action) {
-           state.todos = state.todos.filter(todo => todo.id !== action.payload.id)
+            state.todos = state.todos.filter(todo => todo.id !== action.payload.id)
         },
+    },
+    extraReducers: {
+        //идет загрузка
+        [AxiosTodos.pending]: (state, action) => {
+            state.status = 'loading';
+            state.error = null;
+        },
+        //данные  получены
+        [AxiosTodos.fulfilled]: (state, action) => {
+            state.status = 'resolved';
+            state.todos = action.payload
+        },
+        //обработка ошибок
+        [AxiosTodos.rejected]: SetError,
+        [DeleteTodo.rejected]: SetError,
+        [ToggleStatus.rejected]: SetError,
     }
 })
 
