@@ -55,6 +55,33 @@ export const ToggleStatus = createAsyncThunk(
         }
     }
 )
+
+
+export const addNewTodo = createAsyncThunk(
+    'todos/addNewTodo',
+    async function(text,{rejectWithValue,dispatch}){
+        try {
+            const todo ={
+                id:1,
+                title:text,
+                completed:false
+            }
+            const response = await axios.post(`https://jsonplaceholder.typicode.com/todos`,{
+                headers:{
+                    'Content-Type': 'application/json'
+                },
+                body:JSON.stringify(todo)
+            })
+            if(!!response.ok){
+                throw new Error('Server Error')
+            }
+            const obj = JSON.parse(response.data.body)
+            dispatch(addTodo(obj))
+        } catch (error) {
+            return rejectWithValue(error.message)
+        }
+    }
+)
 const SetError = (state, action) => {
     state.status = 'rejected';
     state.error = action.payload
@@ -69,11 +96,7 @@ const todoSlise = createSlice({
     },
     reducers: {
         addTodo(state, action) {
-            state.todos.push({
-                id: new Date().toISOString(),
-                text: action.payload.text,
-                completed: false
-            })
+            state.todos.push(action.payload)
         },
         toggleTodoCompleted(state, action) {
             const toggledTodo = state.todos.find(todo => todo.id === action.payload.id)
@@ -99,9 +122,10 @@ const todoSlise = createSlice({
         [AxiosTodos.rejected]: SetError,
         [DeleteTodo.rejected]: SetError,
         [ToggleStatus.rejected]: SetError,
+        [addNewTodo.rejected]: SetError,
     }
 })
 
-export const { addTodo, removeTodo, toggleTodoCompleted } = todoSlise.actions
+const { addTodo, removeTodo, toggleTodoCompleted } = todoSlise.actions
 
 export default todoSlise.reducer

@@ -3,7 +3,7 @@ import './App.css';
 import ListList from './components/TodoList';
 import InputField from './components/InputField';
 import { useDispatch, useSelector } from 'react-redux';
-import { addTodo, AxiosTodos } from './state/TodoSlise';
+import { addNewTodo, AxiosTodos } from './state/TodoSlise';
 
 function App() {
 
@@ -12,7 +12,7 @@ function App() {
   const dispatch = useDispatch()
 
   const AddTask = () => {
-    dispatch(addTodo({ text }));
+    dispatch(addNewTodo( text ));
     setText('')
   }
 
